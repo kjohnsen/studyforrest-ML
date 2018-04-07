@@ -3,6 +3,10 @@
 import pandas as pd
 from nilearn.image import concat_imgs, index_img, mean_img, load_img
 from math import ceil
+import pickle
+import os.path
+
+LABEL_FILE = 'cache/label_df.csv'
 
 def get_session_info(start, end):
     if start >= 6410:
@@ -56,41 +60,85 @@ def process_emotion_labels(subject):
 
     rows = []
     # start with first session loaded
-    prev_session = 1
-    session_img = load_img(get_nii_filename(prev_session, subject))
+    prev_run = 1
+    run_img = load_img(get_nii_filename(prev_run, subject))
     result_imgs = []
     # iterate over labels
-    counter = 0
     with open(data_filename, 'r') as fh:
+        counter = 0
         for line in fh:
-            print(line)
             counter += 1
-            if counter > 10: break
+            #if counter > 10: break
             # build dataframe row
             line = line.strip().split('\t')
             start, end = line[:2]
             start = float(start)
             end = float(end)
             char, tags, arousal, val_pos, val_neg = [x.split('=')[1] for x in line[2].split(' ')]
-            rows.append([start, end, char, arousal, val_pos, val_neg])
+            #TODO: get char arousal direction emotion
+            tags = tags.split(',')
+            if 'ha' in tags:
+                arousal = 'high'
+            elif 'la' in tags:
+                arousal = 'low'
+            else:
+                arousal = '.'
+
+            if float(val_pos) > 0:
+                valence = 'pos'
+                if float(val_neg) > 0:
+                    valence = 'both'
+            elif float(val_neg) > 0:
+                valence = 'neg'
+            else: valence = '.'
+
+
+            if 'self' in tags:
+                direction = 'self'
+            elif 'other' in tags:
+                direction = 'other'
+            else:
+                direction = '.'
+
             
-            # get session, start, end
-            session, start_frame, end_frame = get_session_info(start, end)
+            # get run, start, end
+            run, start_frame, end_frame = get_session_info(start, end)
             # get NiImg object and append to results
-            if session != prev_session:
-                prev_session = session
-                session_img = load_img(get_nii_filename(prev_session, subject))
-            episode_img = index_img(session_img, range(start_frame, end_frame+1))
+            if run != prev_run:
+                prev_run = run
+                run_img = load_img(get_nii_filename(prev_run, subject))
+            episode_img = index_img(run_img, range(start_frame, end_frame+1))
             episode_img = mean_img(episode_img)
             assert len(episode_img.shape) == 3 # make sure it's 3D
             result_imgs.append(episode_img)
 
-    result_imgs = concat_imgs(result_imgs)
-    label_df = pd.DataFrame(rows, columns=['start', 'end', 'char', 'arousal', 'val_pos', 'val_neg'])
+            rows.append([char, arousal, valence, direction, run])
 
-    return result_imgs, label_df
+    result_imgs = concat_imgs(result_imgs, auto_resample=True)
+    label_df = pd.DataFrame(rows, columns=['char', 'arousal', 'valence', 'direction', 'run'])
+
+    label_df.to_csv(LABEL_FILE, index=False)
+    with open(get_img_filename(subject), 'wb') as fh:
+        pickle.dump(result_imgs, fh, pickle.HIGHEST_PROTOCOL)
+
+def get_img_filename(subject):
+    return 'cache/episode_means_sub-{}_Nifti1Image.pkl'.format(subject)
+
+
+def get_img_labels(subject):
+    img_file = get_img_filename(subject)
+    if not os.path.isfile(LABEL_FILE) or not os.path.isfile(img_file):
+        process_emotion_labels(subject)
+    labels = pd.read_csv(LABEL_FILE)
+    with open(img_file, 'rb') as fh:
+        imgs = pickle.load(fh)
+    return imgs, labels
+
 
 
 if __name__ == "__main__":
-    img, labels = process_emotion_labels('01')
-    print(labels)
+    for sub in ['01', '02', '03', '04', '05']:
+        process_emotion_labels(sub)
+        img_file = get_img_filename(sub)
+        with open(img_file, 'rb') as fh:
+            imgs = pickle.load(fh)
