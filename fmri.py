@@ -43,20 +43,15 @@ else:
 
 
 label_mask = ~label_col.isin( ["."] )
-print("label mask")
-print(label_mask)
-print(type(label_col))
+
 label_mask = label_mask.values.ravel()
 clean_labels = label_col[label_mask]
-print("Clean label col")
-print(label_col)
+clean_labels = clean_labels.values.ravel()
 #Process fMRI
 clean_fmri_img = index_img(avg_fmri, label_mask)
-print("after removing nulls from fmri, fmri shape")
-print (clean_fmri_img.shape)
+
 smooth_img = image.smooth_img(clean_fmri_img,  fwhm='fast')
-print("smooth image shape")
-print(smooth_img.shape)
+
 #Get Mask
 mask_file = label_prep.get_mask_filename(1, subject) 
 mask_img = image.load_img(mask_file)
@@ -81,14 +76,15 @@ searchlight = decoding.SearchLight(
 	verbose=1,
 	cv=cv,
 	)
-print(smooth_img.shape)
-print(clean_labels.shape)
+
 searchlight.fit(smooth_img, clean_labels)
 
-mean_fmri = image.mean_img(fmri_img)
+#Get searchlight_img, and plot it
+mean_fmri = image.mean_img(smooth_img)
 searchlight_img = image.new_img_like(mean_fmri, searchlight.scores_)
 
 sl_path = algorithm + "_" + "sub" + subject + "_searchlight_plot.svg"
+
 
 filename = algorithm + "_" + subject + "_scorespyobj"
 with open(filename, 'wb') as file:
@@ -101,9 +97,9 @@ searchlight_plot =plot_img(searchlight_img, bg_img=mean_fmri,
 
 filename = algorithm + "_" + subject + "_searchlightmap_pyobj"  
 with open(filename, 'wb') as file:
-        pickle.dump(statmap, file, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(searchlight_plot, file, pickle.HIGHEST_PROTOCOL)
 
-searchlight_plot.close()
+#fScore_img,plotted
 p_ma = np.ma.array(p_unmasked, mask=np.logical_not(process_mask))
 f_score_img = new_img_like(mean_fmri, p_ma)
 

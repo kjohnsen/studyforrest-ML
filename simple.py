@@ -16,7 +16,6 @@ subject = sys.argv[1]
 label_type = sys.argv[2]
 #algorithm = sys.argv[3]
 
-files = {}
 avg_fmri, labels = label_prep.get_img_labels(subject) 
 bg_img = image.mean_img(avg_fmri)
 	
