@@ -11,15 +11,19 @@ import math
 from nilearn.plotting import plot_stat_map, plot_img, show
 from nilearn import image
 import pickle
+import ml_prep
 
 subject = sys.argv[1]
 label_type = sys.argv[2]
-#algorithm = sys.argv[3]
 
-avg_fmri, labels = label_prep.get_img_labels(subject) 
+if len(sys.argv) > 2:
+    offset = True
+
+avg_fmri, labels = label_prep.get_img_labels(subject, offset) 
 bg_img = image.mean_img(avg_fmri)
 	
-fmri_masked, masker, clean_labels, session_label = ml_prep.get_fmri_masker_labels_runs
+fmri_masked, masker, clean_labels, session_label = \
+        ml_prep.get_fmri_masker_labels_runs(subject, label_type)
 
 #SVC stuff
 from sklearn.svm import SVC
@@ -28,7 +32,7 @@ svc = SVC(kernel='linear')
 #file prefix
 prefix = 'output/simple_svc_{}_{}'.format(subject, label_type)
 
-if False:
+if True:
     from sklearn.cross_validation import LeaveOneLabelOut, cross_val_score
     cv = LeaveOneLabelOut(session_label)
     cv_score = cross_val_score(svc, fmri_masked, clean_labels, cv=cv, n_jobs=8)
@@ -37,23 +41,29 @@ if False:
     # write scores to log file
     with open('output/log.txt', 'a') as fh:
         log_line = ['SVC', subject, label_type]
-        log_line.extend(cv_score)
+        cv_score = np.mean(cv_score)
+        cv_score = "{0:.2f}".format(cv_score)
+        log_line.append(cv_score)
+        if offset: log_line.append("offset")
         log_line = [str(x) for x in log_line]
         fh.write('\t'.join(log_line) + '\n')
 
-svc.fit(fmri_masked, clean_labels)
+#svc.fit(fmri_masked, clean_labels)
 
-training_score = svc.score(fmri_masked, clean_labels)
-print("Score for training data = {}".format(training_score))
+#training_score = svc.score(fmri_masked, clean_labels)
+#print("Score for training data = {}".format(training_score))
 
-coef = svc.coef_
-coef_img = masker.inverse_transform(coef)
-coef_img.to_filename(prefix + '_tmap.nii')
-
-# plot
-plot_stat_map(coef_img, bg_img=bg_img, title='Subject {}, {}'.format(subject, label_type))\
-        .savefig(prefix + '_weights.svg')
-
-# broken pickle saving?
-with open(prefix + '.svc', 'wb') as fh:
-    pickle.dump(svc, fh, pickle.HIGHEST_PROTOCOL)
+#print('fmri_masked shape', fmri_masked.shape)
+#coef = svc.coef_
+#print('coef shape', coef.shape)
+#coef_img = masker.inverse_transform(coef)
+#print('coef_img shape', coef_img.shape)
+#coef_img.to_filename(prefix + '_tmap.nii')
+#
+## plot
+#plot_stat_map(coef_img, bg_img=bg_img, title='Subject {}, {}'.format(subject, label_type))\
+#        .savefig(prefix + '_weights.svg')
+#
+## broken pickle saving?
+#with open(prefix + '.svc', 'wb') as fh:
+#    pickle.dump(svc, fh, pickle.HIGHEST_PROTOCOL)

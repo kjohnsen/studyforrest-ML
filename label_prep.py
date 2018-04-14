@@ -6,9 +6,11 @@ from math import ceil
 import pickle
 import os.path
 
-LABEL_FILE = 'cache/label_df.csv'
 
-def get_session_info(start, end):
+def get_session_info(start, end, hrfOffset):
+    if hrfOffset:
+        start += 2
+        end += 4
     if start >= 6410:
         session = 8
         offset = 6410
@@ -52,7 +54,7 @@ def get_mask_filename(run, subject):
             .format(subject, run, subject, run)
     return path
 
-def process_emotion_labels(subject):
+def process_emotion_labels(subject, label_file, offset=False):
 
     data_filename = "labels/segmentation/emotions_av_1s_thr50.tsv"
     #labels = pd.read_csv(data_filename, sep='\t')
@@ -102,7 +104,7 @@ def process_emotion_labels(subject):
 
             
             # get run, start, end
-            run, start_frame, end_frame = get_session_info(start, end)
+            run, start_frame, end_frame = get_session_info(start, end, offset)
             # get NiImg object and append to results
             if run != prev_run:
                 prev_run = run
@@ -117,7 +119,7 @@ def process_emotion_labels(subject):
     result_imgs = concat_imgs(result_imgs, auto_resample=True)
     label_df = pd.DataFrame(rows, columns=['char', 'arousal', 'valence', 'direction', 'run'])
 
-    label_df.to_csv(LABEL_FILE, index=False)
+    label_df.to_csv(label_file, index=False)
     with open(get_img_filename(subject), 'wb') as fh:
         pickle.dump(result_imgs, fh, pickle.HIGHEST_PROTOCOL)
 
@@ -125,11 +127,13 @@ def get_img_filename(subject):
     return 'cache/episode_means_sub-{}_Nifti1Image.pkl'.format(subject)
 
 
-def get_img_labels(subject):
+def get_img_labels(subject, offset=False):
     img_file = get_img_filename(subject)
-    if not os.path.isfile(LABEL_FILE) or not os.path.isfile(img_file):
-        process_emotion_labels(subject)
-    labels = pd.read_csv(LABEL_FILE)
+    offset_string = '_offset' if offset else ''
+    label_file = 'cache/label_df{}.csv'.format(offset_string)
+    if not os.path.isfile(label_file) or not os.path.isfile(img_file):
+        process_emotion_labels(subject, label_file, offset)
+    labels = pd.read_csv(label_file)
     with open(img_file, 'rb') as fh:
         imgs = pickle.load(fh)
     return imgs, labels
@@ -138,7 +142,6 @@ def get_img_labels(subject):
 
 if __name__ == "__main__":
     for sub in ['01', '02', '03', '04', '05']:
-        process_emotion_labels(sub)
-        img_file = get_img_filename(sub)
-        with open(img_file, 'rb') as fh:
-            imgs = pickle.load(fh)
+        label_file = 'cache/label_df_offset.csv'
+        offset=True
+        process_emotion_labels(sub, label_file, offset)
