@@ -19,15 +19,15 @@ export OMP_NUM_THREADS=$SLURM_CPUS_ON_NODE
 module load python/3/6
 
 # without offset
-python3 simple.py "01" "valence"
-python3 simple.py "02" "valence"
-python3 simple.py "03" "valence"
-python3 simple.py "04" "valence"
-python3 simple.py "05" "valence"
+python3 simple.py "01" "valence" False
+python3 simple.py "02" "valence" False
+python3 simple.py "03" "valence" False
+python3 simple.py "04" "valence" False
+python3 simple.py "05" "valence" False
 
 # with offset
-python3 simple.py "01" "valence" offset
-python3 simple.py "02" "valence" offset
-python3 simple.py "03" "valence" offset
-python3 simple.py "04" "valence" offset
-python3 simple.py "05" "valence" offset
+python3 simple.py "01" "valence" True
+python3 simple.py "02" "valence" True
+python3 simple.py "03" "valence" True
+python3 simple.py "04" "valence" True
+python3 simple.py "05" "valence" True

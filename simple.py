@@ -16,14 +16,16 @@ import ml_prep
 subject = sys.argv[1]
 label_type = sys.argv[2]
 
-if len(sys.argv) > 2:
+if sys.argv[3] == 'True':
     offset = True
+else:
+    offset = False
 
 avg_fmri, labels = label_prep.get_img_labels(subject, offset) 
 bg_img = image.mean_img(avg_fmri)
 	
 fmri_masked, masker, clean_labels, session_label = \
-        ml_prep.get_fmri_masker_labels_runs(subject, label_type)
+        ml_prep.get_fmri_masker_labels_runs(subject, label_type, offset=offset)
 
 #SVC stuff
 from sklearn.svm import SVC
@@ -45,8 +47,11 @@ if True:
         cv_score = "{0:.2f}".format(cv_score)
         log_line.append(cv_score)
         if offset: log_line.append("offset")
+        else: log_line.append("no_offset")
         log_line = [str(x) for x in log_line]
-        fh.write('\t'.join(log_line) + '\n')
+        log_line = '\t'.join(log_line)
+        fh.write(log_line + '\n')
+        print(log_line)
 
 #svc.fit(fmri_masked, clean_labels)
 

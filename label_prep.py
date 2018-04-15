@@ -54,7 +54,7 @@ def get_mask_filename(run, subject):
             .format(subject, run, subject, run)
     return path
 
-def process_emotion_labels(subject, label_file, offset=False):
+def process_emotion_labels(subject, label_file, offset=True):
 
     data_filename = "labels/segmentation/emotions_av_1s_thr50.tsv"
     #labels = pd.read_csv(data_filename, sep='\t')
@@ -120,17 +120,23 @@ def process_emotion_labels(subject, label_file, offset=False):
     label_df = pd.DataFrame(rows, columns=['char', 'arousal', 'valence', 'direction', 'run'])
 
     label_df.to_csv(label_file, index=False)
-    with open(get_img_filename(subject), 'wb') as fh:
+    with open(get_img_filename(subject, offset), 'wb') as fh:
         pickle.dump(result_imgs, fh, pickle.HIGHEST_PROTOCOL)
 
-def get_img_filename(subject):
-    return 'cache/episode_means_sub-{}_Nifti1Image.pkl'.format(subject)
+def get_img_filename(subject, offset):
+    offset_string = '_offset' if offset else ''
+    return 'cache/episode_means_sub-{}{}_Nifti1Image.pkl'.format(subject, offset_string)
 
-
-def get_img_labels(subject, offset=False):
-    img_file = get_img_filename(subject)
+def get_label_filename(offset):
     offset_string = '_offset' if offset else ''
     label_file = 'cache/label_df{}.csv'.format(offset_string)
+    return label_file
+
+
+
+def get_img_labels(subject, offset=True):
+    img_file = get_img_filename(subject, offset)
+    label_file = get_label_filename(offset)
     if not os.path.isfile(label_file) or not os.path.isfile(img_file):
         process_emotion_labels(subject, label_file, offset)
     labels = pd.read_csv(label_file)
@@ -142,6 +148,6 @@ def get_img_labels(subject, offset=False):
 
 if __name__ == "__main__":
     for sub in ['01', '02', '03', '04', '05']:
-        label_file = 'cache/label_df_offset.csv'
         offset=True
+        label_file = get_label_filename(offset)
         process_emotion_labels(sub, label_file, offset)

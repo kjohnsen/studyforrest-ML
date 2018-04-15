@@ -12,9 +12,9 @@ def get_atlas_img_labels(cortsub):
         return load_img(atlas_filename), atlas_labels
 
 
-def get_fmri_masker_labels_runs(subject, label_type, roiMask=None):
+def get_fmri_masker_labels_runs(subject, label_type, offset=True, roiMask=None):
 
-    avg_fmri, labels = label_prep.get_img_labels(subject) 
+    avg_fmri, labels = label_prep.get_img_labels(subject, offset) 
     avg_fmri = smooth_img(avg_fmri, fwhm='fast')
     bg_img = mean_img(avg_fmri)
             
