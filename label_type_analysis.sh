@@ -18,17 +18,20 @@ export OMP_NUM_THREADS=$SLURM_CPUS_ON_NODE
 
 module load python/3/6
 
-# without offset
-echo -e 'strategy\tsubject\tlabel_type\taccuracy\toffset'
-python3 simple.py "01" "valence" False
-python3 simple.py "02" "valence" False
-python3 simple.py "03" "valence" False
-python3 simple.py "04" "valence" False
-python3 simple.py "05" "valence" False
-
 # with offset
+echo -e 'strategy\tsubject\tlabel_type\taccuracy\toffset'
 python3 simple.py "01" "valence" True
 python3 simple.py "02" "valence" True
 python3 simple.py "03" "valence" True
 python3 simple.py "04" "valence" True
 python3 simple.py "05" "valence" True
+python3 simple.py "01" "arousal" True
+python3 simple.py "02" "arousal" True
+python3 simple.py "03" "arousal" True
+python3 simple.py "04" "arousal" True
+python3 simple.py "05" "arousal" True
+python3 simple.py "01" "direction" True
+python3 simple.py "02" "direction" True
+python3 simple.py "03" "direction" True
+python3 simple.py "04" "direction" True
+python3 simple.py "05" "direction" True

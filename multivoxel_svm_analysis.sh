@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --time=01:00:00   # walltime
+#SBATCH --time=1:00:00   # walltime
 #SBATCH --ntasks=8   # number of processor cores (i.e. tasks)
 #SBATCH --nodes=1   # number of nodes
 #SBATCH --mem-per-cpu=10096M   # memory per CPU core
@@ -17,18 +17,8 @@ export PBS_QUEUE=batch
 export OMP_NUM_THREADS=$SLURM_CPUS_ON_NODE
 
 module load python/3/6
-
-# without offset
-echo -e 'strategy\tsubject\tlabel_type\taccuracy\toffset'
-python3 simple.py "01" "valence" False
-python3 simple.py "02" "valence" False
-python3 simple.py "03" "valence" False
-python3 simple.py "04" "valence" False
-python3 simple.py "05" "valence" False
-
-# with offset
-python3 simple.py "01" "valence" True
-python3 simple.py "02" "valence" True
-python3 simple.py "03" "valence" True
-python3 simple.py "04" "valence" True
-python3 simple.py "05" "valence" True
+python3 simple.py 01 valence True >> output/multivoxel_svm_results.tsv
+python3 simple.py 02 valence True >> output/multivoxel_svm_results.tsv
+python3 simple.py 03 valence True >> output/multivoxel_svm_results.tsv
+python3 simple.py 04 valence True >> output/multivoxel_svm_results.tsv
+python3 simple.py 05 valence True >> output/multivoxel_svm_results.tsv

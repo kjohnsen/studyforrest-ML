@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from copy import deepcopy
 from nilearn import datasets
 from nilearn.input_data import NiftiMasker
 import os
@@ -43,6 +44,8 @@ if True:
     # write scores to log file
     with open('output/log.txt', 'a') as fh:
         log_line = ['SVC', subject, label_type]
+        alt_log_line = deepcopy(log_line)
+        alt_log_line.extend(cv_score)
         cv_score = np.mean(cv_score)
         cv_score = "{0:.2f}".format(cv_score)
         log_line.append(cv_score)
@@ -50,8 +53,11 @@ if True:
         else: log_line.append("no_offset")
         log_line = [str(x) for x in log_line]
         log_line = '\t'.join(log_line)
+        alt_log_line = [str(x) for x in alt_log_line]
+        alt_log_line = '\t'.join(alt_log_line)
         fh.write(log_line + '\n')
-        print(log_line)
+        #print(log_line)
+        print(alt_log_line)
 
 #svc.fit(fmri_masked, clean_labels)
 

@@ -70,10 +70,10 @@ process_mask_img = image.new_img_like(nifti_masker.mask_img_, process_mask)
 #CrossValidation
 cv = KFold(clean_labels.size, n_folds=6)
 print("presearch")
+#Process mask
 searchlight = decoding.SearchLight(
 	nifti_masker.mask_img_,
-	process_mask_img=process_mask_img,
-	radius = 3.0,
+	radius = 5.0,
 	estimator=algorithm,
 	n_jobs = 1,
 	verbose=1,
@@ -101,7 +101,7 @@ filename = algorithm + "_" + subject + "_scorespyobj"
 	
 searchlight_plot =plot_img(searchlight_img, bg_img=mean_fmri,
          title="Searchlight", display_mode="z", cut_coords=[-9], output_file=sl_path,
-         cmap='hot', black_bg=True)
+         threshold= 0.1, cmap='hot', black_bg=True)
 
 
 filename = algorithm + "_" + subject + "_searchlightmap_pyobj"  
